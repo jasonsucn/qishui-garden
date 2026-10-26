@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#16251f" />
+  <meta name="description" content="栖水园 — 一座可以游园、观鱼、听雨、赏月的交互式江南微缩庭院。" />
+  <title>栖水园 · 一院江南</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%23a34d38'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='38' fill='%23fff5e7'%3E栖%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main id="app" aria-label="栖水园三维交互庭院">
+    <div id="scene" aria-label="可拖动旋转的三维江南庭院"></div>
+    <div class="paper-grain" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="topbar ui-layer">
+      <a class="brand" href="#" id="brand-home" aria-label="回到庭院全景">
+        <span class="brand-seal">栖水</span>
+        <span class="brand-copy"><strong>栖水园</strong><small>QISHUI GARDEN</small></span>
+      </a>
+      <div class="place-title">
+        <span class="hairline"></span>
+        <div><strong id="view-title">一院江南</strong><small id="view-subtitle">风回一袖，水满清池</small></div>
+        <span class="hairline"></span>
+      </div>
+      <nav class="top-actions" aria-label="快捷功能">
+        <div class="time-chip" title="当前园内时辰"><span id="time-icon">☀</span><span id="garden-time">辰时 · 08:00</span></div>
+        <button class="icon-button" id="sound-button" aria-label="开启或关闭声音" title="声音 · M">
+          <svg class="icon sound-on" viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5l4.5 4V5Z"/><path d="M15 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"/></svg>
+        </button>
+        <button class="icon-button" id="help-button" aria-label="打开游园指南" title="游园指南 · H">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.4 2.4 0 0 1 4.65.8c0 1.8-2.35 2-2.35 3.7M12 17h.01"/></svg>
+        </button>
+        <button class="icon-button" id="fullscreen-button" aria-label="全屏游园" title="全屏 · F">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <aside class="season-panel glass-panel ui-layer" aria-label="四季切换">
+      <span class="panel-kicker">四时有序</span>
+      <div class="season-list" role="group" aria-label="选择季节">
+        <button class="season-button active" data-season="spring"><i>春</i><span>烟柳</span></button>
+        <button class="season-button" data-season="summer"><i>夏</i><span>荷风</span></button>
+        <button class="season-button" data-season="autumn"><i>秋</i><span>枫露</span></button>
+        <button class="season-button" data-season="winter"><i>冬</i><span>晴雪</span></button>
+      </div>
+    </aside>
+
+    <aside class="poem-card glass-panel ui-layer" id="poem-card">
+      <div class="poem-heading"><span class="mini-seal">闲</span><span id="poem-label">园主手记</span><button id="close-poem" aria-label="收起手记">×</button></div>
+      <p class="poem-text" id="poem-text">小阁藏春，闲窗锁昼。<br />一池碧水，半日清欢。</p>
+      <span class="poem-source" id="poem-source">— 栖水园 · 游园偶记</span>
+      <div class="poem-footer"><span class="live-dot"></span><span id="scene-status">微风 · 锦鲤正闲游</span></div>
+    </aside>
+
+    <div class="music-player glass-panel ui-layer" id="music-player">
+      <button id="music-toggle" class="record" aria-label="暂停或播放音乐"><span>音</span><i></i></button>
+      <div class="music-copy"><strong id="music-title">枕水听琴</strong><small><span class="equalizer"><i></i><i></i><i></i></span> 五声音阶 · 即兴演奏</small></div>
+      <button id="settings-button" class="text-icon" aria-label="打开设置" title="造园设置">•••</button>
+    </div>
+
+    <div class="compass ui-layer" aria-hidden="true"><span>北</span><div id="compass-needle">⌃</div><small>江南</small></div>
+
+    <nav class="garden-dock ui-layer" aria-label="庭院互动">
+      <button class="dock-button feed-button" id="feed-button" data-action="feed">
+        <span class="dock-icon">饵</span><span class="dock-copy"><strong>撒饵观鱼</strong><small>点击池水 · 鱼儿争食</small></span><kbd>1</kbd>
+      </button>
+        <span class="dock-divider"></span>
+      <button class="dock-button" id="tour-button" data-action="tour">
+        <span class="dock-icon">游</span><span class="dock-copy"><strong>画中漫游</strong><small>移步换景 · 自动导览</small></span><kbd>2</kbd>
+      </button>
+      <button class="dock-button" id="weather-button" data-action="weather">
+        <span class="dock-icon" id="weather-dock-icon">晴</span><span class="dock-copy"><strong id="weather-label">烟雨江南</strong><small id="weather-subtitle">听檐雨 · 观涟漪</small></span><kbd>3</kbd>
+      </button>
+      <button class="dock-button" id="day-button" data-action="day">
+        <span class="dock-icon" id="day-dock-icon">昼</span><span class="dock-copy"><strong id="day-label">灯火良宵</strong><small id="day-subtitle">点亮一园暖灯</small></span><kbd>4</kbd>
+      </button>
+      <span class="dock-divider"></span>
+      <button class="dock-button compact" id="photo-button" data-action="photo" aria-label="保存庭院照片" title="庭院留影 · P">
+        <span class="dock-icon">影</span><span class="dock-copy"><strong>留影</strong><small>收藏此刻</small></span>
+      </button>
+    </nav>
+
+    <div class="interaction-hint ui-layer" id="interaction-hint"><span class="mouse-symbol">◉</span><span>拖动环视 · 滚轮缩放 · 点击园中物件有惊喜</span></div>
+    <div class="feed-banner ui-layer" id="feed-banner"><span class="feed-dot"></span><strong>撒饵观鱼</strong><span>移动至池面，轻点撒下鱼食</span><button id="quick-feed">池心撒饵 <kbd>Space</kbd></button><button id="cancel-feed">退出 <kbd>Esc</kbd></button></div>
+    <div id="cursor-label" class="cursor-label" aria-hidden="true"></div>
+    <div id="feed-cursor" aria-hidden="true"><span></span><i></i></div>
+    <div id="toast" class="toast ui-layer" role="status" aria-live="polite"></div>
+
+    <section class="tour-progress glass-panel ui-layer" id="tour-progress" aria-label="导览进度">
+      <div><span class="live-dot"></span><strong id="tour-stop">第一景 · 曲水流觞</strong></div>
+      <div class="tour-line"><i id="tour-line-fill"></i></div>
+      <button id="next-tour">下一景 →</button><button id="stop-tour" aria-label="结束导览">×</button>
+    </section>
+
+    <div class="modal-backdrop ui-layer" id="help-modal" hidden>
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <button class="modal-close" data-close="help-modal" aria-label="关闭">×</button>
+        <span class="modal-seal">游</span><p class="eyebrow">A LITTLE JIANGNAN</p><h2 id="help-title">把日子，过成江南。</h2>
+        <p class="modal-intro">这里没有任务，也不必匆忙。听一段琴，喂一池鱼，等一场雨。</p>
+        <div class="guide-grid">
+          <article><span>01</span><h3>移步换景</h3><p>左键拖动环视，滚轮拉近；右键拖动平移。手机可单指旋转、双指缩放。</p></article>
+          <article><span>02</span><h3>与园相亲</h3><p>点击「撒饵观鱼」后轻点池水。也可点亮灯笼、推开木门、敲响风铃、细看荷花。</p></article>
+          <article><span>03</span><h3>四时晨昏</h3><p>切换四季、天气与昼夜，看鱼戏莲叶、雨落青瓦、灯映池水。</p></article>
+          <article><span>04</span><h3>收藏风雅</h3><p>按 P 或点击「留影」保存无界面的高清庭院照片。画面设置会保存在本机。</p></article>
+        </div>
+        <div class="shortcut-row"><span><kbd>1</kbd> 喂鱼</span><span><kbd>2</kbd> 漫游</span><span><kbd>3</kbd> 天气</span><span><kbd>4</kbd> 昼夜</span><span><kbd>M</kbd> 声音</span><span><kbd>H</kbd> 指南</span></div>
+        <button class="primary-button" data-close="help-modal">且去游园 <span>→</span></button>
+      </section>
+    </div>
+
+    <div class="modal-backdrop ui-layer" id="settings-modal" hidden>
+      <section class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <button class="modal-close" data-close="settings-modal" aria-label="关闭">×</button>
+        <span class="modal-seal">雅</span><p class="eyebrow">MAKE IT YOURS</p><h2 id="settings-title">造园小设</h2>
+        <div class="setting-row"><div><strong>园内时辰</strong><small>从清晨薄雾到月映荷塘</small></div><span id="time-value">08:00</span></div>
+        <input id="time-slider" class="range" type="range" min="0" max="24" step="0.05" value="8" aria-label="园内时辰" />
+        <div class="setting-row"><div><strong>丝竹与环境音量</strong><small>建议佩戴耳机，听见风与水</small></div><span id="volume-value">65%</span></div>
+        <input id="volume-slider" class="range" type="range" min="0" max="100" step="1" value="65" aria-label="音量" />
+        <div class="setting-row"><div><strong>画面品质</strong><small>高品质包含柔和阴影与细腻水光</small></div><select id="quality-select"><option value="high">精致</option><option value="medium">平衡</option><option value="low">轻盈</option></select></div>
+        <div class="setting-row"><div><strong>自动环视</strong><small>停下手，也会缓缓换一处风景</small></div><label class="switch"><input id="rotate-toggle" type="checkbox" /><i></i></label></div>
+        <div class="setting-row"><div><strong>园中山石题字</strong><small>显示可互动物件的名称</small></div><label class="switch"><input id="labels-toggle" type="checkbox" checked /><i></i></label></div>
+        <div class="settings-footer"><button id="reset-view" class="secondary-button">回到初始视角</button><button class="primary-button" data-close="settings-modal">好了，赏园</button></div>
+      </section>
+    </div>
+
+    <div class="entry-screen ui-layer" id="entry-screen">
+      <div class="entry-landscape" aria-hidden="true"><svg viewBox="0 0 600 190"><path d="M0 160 Q70 100 135 151 Q210 64 285 151 Q350 98 420 145 Q500 72 600 150V190H0Z"/><path d="M0 173 Q95 125 190 170 Q290 116 390 170 Q500 122 600 168"/></svg></div>
+      <div class="entry-content">
+        <div class="entry-mark"><span>栖</span><i></i><span>水</span></div>
+        <p class="entry-eyebrow">一方庭院 · 四季清欢</p>
+        <h1>栖 水 园</h1>
+        <p class="entry-subtitle">把江南，藏进一方天地</p>
+        <div class="entry-loading"><i id="loading-fill"></i></div>
+        <p id="loading-text">正在铺一席江南烟雨…</p>
+        <button class="enter-button" id="enter-button" disabled><span>推门入园</span><i>→</i></button>
+        <small class="entry-note">建议佩戴耳机 · 拖动环视 · 滚轮缩放</small>
+      </div>
+      <div class="entry-corner left">SUZHOU<br />IN MINIATURE</div><div class="entry-corner right">一 池 碧 水<br />半 日 清 欢</div>
+    </div>
+
+    <div class="fatal-error ui-layer" id="fatal-error" hidden><span>园</span><h2>庭院暂未落成</h2><p id="error-message">请检查网络后刷新页面，首次打开需要加载 3D 引擎。</p><button onclick="location.reload()">重新造园</button></div>
+  </main>
+  <script>
+    window.addEventListener('error', function (event) {
+      if (window.__gardenReady) return;
+      var message = document.getElementById('error-message');
+      if (message && event.message) message.textContent = '庭院加载遇到问题：' + event.message + '。请检查网络并刷新重试。';
+    });
+    setTimeout(function () {
+      if (!window.__gardenReady) {
+        document.getElementById('fatal-error').hidden = false;
+        document.getElementById('loading-text').textContent = '首次营造需要联网加载 3D 引擎，请检查网络。';
+      }
+    }, 30000);
+  </script>
+  <script type="module" src="js/main.js" onerror="document.getElementById('fatal-error').hidden=false"></script>
+</body>
+</html>
